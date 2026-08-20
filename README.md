@@ -1,180 +1,832 @@
-# 🛤️ Jerney — Blog Platform
+# Jerney - End-to-End DevSecOps 3-Tier Blog Application
 
-A Gen-Z vibe blog platform built with a 3-tier architecture — React frontend, Node.js backend, and PostgreSQL database.
+An end-to-end DevSecOps implementation of a 3-tier blog application using React, Node.js, PostgreSQL, Docker, Jenkins, SonarQube, Trivy, Gitleaks, Kubeaudit, Docker Hub, and Amazon EKS.
 
-![Tech Stack](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react)
-![Tech Stack](https://img.shields.io/badge/Node.js-20-339933?style=flat-square&logo=node.js)
-![Tech Stack](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql)
+The project demonstrates how a containerized application can be securely built, scanned, continuously integrated, and deployed to Kubernetes using a Jenkins-based CI/CD pipeline.
 
 ---
 
-> [!IMPORTANT]
-> **Looking for the full DevSecOps implementation?**
-> Switch to the [`devops`](../../tree/devops) branch for Docker, Kubernetes (EKS Auto Mode), Terraform, CI/CD with GitHub Actions, container security scanning, and more.
->
-> ```bash
-> git checkout devops
-> ```
+## Application Architecture
 
----
+The application consists of three tiers:
 
-## ✨ Features
+- **Frontend:** React + Nginx
+- **Backend:** Node.js
+- **Database:** PostgreSQL
 
-- 📝 Create blog posts with emoji vibes
-- ✏️ Edit your existing posts
-- 🗑️ Delete posts you're not feeling anymore
-- 💬 Comment on posts
-- 🎨 Gen-Z dark UI with glassmorphism and gradients
+### Application Flow
 
-## 🏗️ Architecture
-
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│   Frontend   │────▶│   Backend    │────▶│  PostgreSQL   │
-│   (React +   │◀────│  (Node.js +  │◀────│              │
-│    Nginx)    │     │   Express)   │     │              │
-│   Port 80    │     │  Port 5000   │     │  Port 5432   │
-└──────────────┘     └──────────────┘     └──────────────┘
-```
-
-## 📁 Project Structure
-
-```
+```text
+                    Internet
+                       |
+                       v
+                  AWS ALB
+                       |
+                       v
+              Frontend Service
+                       |
+                       v
+               React + Nginx
+                  Port 8080
+                       |
+                 /api/ requests
+                       |
+                       v
+              Backend Service
+                       |
+                       v
+                Node.js API
+                  Port 5000
+                       |
+                       v
+                 PostgreSQL
+                  Port 5432
+                       |
+                       v
+                 Kubernetes PVC
+                       |
+                       v
+                     EBS
+DevSecOps Architecture
+                         GitHub
+                           |
+                       devops branch
+                           |
+                           v
+                        Jenkins
+                           |
+          +----------------+----------------+
+          |                |                |
+          v                v                v
+       Gitleaks          Trivy          SonarQube
+     Secret Scan      Security Scan    Code Analysis
+          |                |                |
+          +----------------+----------------+
+                           |
+                           v
+                    npm Install & Test
+                           |
+                           v
+                      Docker Build
+                     /            \
+                    /              \
+                   v                v
+              Frontend           Backend
+                Image              Image
+                   \                /
+                    \              /
+                     v            v
+                    Trivy Image Scan
+                           |
+                           v
+                       Docker Hub
+                           |
+                           v
+                       Kubeaudit
+                           |
+                           v
+                 Kubernetes Validation
+                           |
+                           v
+                    Amazon EKS
+                           |
+            +--------------+--------------+
+            |                             |
+            v                             v
+       Frontend Pods                Backend Pods
+       React + Nginx                  Node.js
+            |                             |
+            +--------------+--------------+
+                           |
+                           v
+                      PostgreSQL
+                           |
+                           v
+                         PVC
+                           |
+                           v
+                         EBS
+Technologies Used
+Application
+React
+Node.js
+PostgreSQL
+Nginx
+Containerization
+Docker
+Docker Compose
+CI/CD
+Jenkins
+GitHub
+DevSecOps / Security
+Gitleaks
+Trivy
+SonarQube
+Kubeaudit
+Container Registry
+Docker Hub
+Cloud & Kubernetes
+AWS
+Amazon EKS
+Kubernetes
+AWS Application Load Balancer
+EBS
+Kubernetes PersistentVolumeClaim
+Monitoring
+Prometheus
+Node Exporter
+Blackbox Exporter
+Grafana
+Project Structure
 Jerney/
-├── frontend/                # React (Vite) frontend
-│   ├── src/                 # React components & pages
-│   ├── nginx.conf           # Nginx config for serving the app
-│   └── package.json
-├── backend/                 # Node.js Express API
-│   ├── src/                 # Routes, DB connection
-│   └── package.json
-├── deploy/                  # EC2 deployment scripts
-│   ├── setup.sh             # One-click EC2 setup script
-│   └── jerney-nginx.conf    # Nginx reverse proxy config
+│
+├── backend/
+│   ├── src/
+│   ├── Dockerfile
+│   └── .dockerignore
+│
+├── frontend/
+│   ├── src/
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── .dockerignore
+│
+├── k8s/
+│   └── manifest.yaml
+│
+├── docker-compose.yml
+├── Jenkinsfile
+├── .gitignore
+├── .env
+├── .env.example
 └── README.md
-```
+Local Development
 
----
+Docker Compose is used to run the complete application locally.
 
-## 🚀 Deploy on AWS EC2
+The Compose setup contains:
 
-### Prerequisites
+PostgreSQL
+     |
+     v
+Backend
+     |
+     v
+Frontend + Nginx
+Start the Application
 
-- An AWS EC2 instance running **Ubuntu 22.04+**
-- Security Group allowing inbound traffic on ports **22** (SSH) and **80** (HTTP)
-- SSH access to the instance
+From the project root:
 
-### Step 1: Transfer the Code to EC2
+docker compose up --build
 
-```bash
-# From your local machine
-scp -r -i your-key.pem ./Jerney ubuntu@<EC2_PUBLIC_IP>:~/Jerney
-```
+The frontend is available at:
 
-### Step 2: SSH into the Instance
+http://localhost
 
-```bash
-ssh -i your-key.pem ubuntu@<EC2_PUBLIC_IP>
-```
+The backend runs internally on:
 
-### Step 3: Run the Setup Script
+5000
 
-The `deploy/setup.sh` script installs everything and configures the app automatically:
+PostgreSQL runs on:
 
-```bash
-cd ~/Jerney
-chmod +x deploy/setup.sh
-./deploy/setup.sh
-```
+5432
+Stop the Application
+docker compose down
 
-This script will:
-1. Update system packages
-2. Install **Node.js 20.x**, **PostgreSQL 16**, **Nginx**, and **PM2**
-3. Create the database and user
-4. Install backend dependencies
-5. Build the React frontend
-6. Configure Nginx as a reverse proxy
-7. Start the backend with PM2 (auto-restarts on crash/reboot)
+To remove the PostgreSQL volume as well:
 
-### Step 4: Access the App
+docker compose down -v
+Docker Configuration
 
-Open your browser and go to:
+The application uses multi-stage Docker builds.
 
-```
-http://<EC2_PUBLIC_IP>
-```
+Backend
 
-### Useful Commands
+The backend Docker image:
 
-```bash
-pm2 status                          # Check backend status
-pm2 logs                            # View backend logs
-pm2 restart all                     # Restart backend
-sudo systemctl restart nginx        # Restart Nginx
-sudo -u postgres psql -d jerney_db  # Connect to database
-```
+Uses Node.js Alpine
+Uses a multi-stage build
+Installs production dependencies
+Runs as a non-root user
+Uses dumb-init
+Exposes port 5000
+Node.js
+   |
+   v
+Multi-stage Docker Build
+   |
+   v
+Production Image
+   |
+   v
+Node.js :5000
+Frontend
 
----
+The frontend Docker image:
 
-## 🧑‍💻 Local Development (Without Docker)
+Builds the React application
+Uses Nginx Alpine for production
+Removes the default Nginx configuration
+Uses a custom Nginx configuration
+Runs Nginx as a non-root user
+Exposes port 8080
+React Source
+     |
+     v
+npm Build
+     |
+     v
+React dist/
+     |
+     v
+Nginx
+     |
+     v
+Port 8080
+Nginx Configuration
 
-### Prerequisites
+The frontend container uses:
 
-- Node.js 20+
-- PostgreSQL 16+
+frontend/nginx.conf
 
-### Backend
+Nginx serves the React frontend and proxies API requests to the backend.
 
-```bash
-cd backend
-npm install
-
-# Create a .env file (or export these variables)
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=jerney_user
-export DB_PASSWORD=jerney_pass_2026
-export DB_NAME=jerney_db
-export PORT=5000
-
-npm start
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The Vite dev server starts on `http://localhost:3000` and proxies `/api` requests to the backend at `http://localhost:5000`.
-
----
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/posts` | Get all posts |
-| GET | `/api/posts/:id` | Get single post with comments |
-| POST | `/api/posts` | Create a new post |
-| PUT | `/api/posts/:id` | Update a post |
-| DELETE | `/api/posts/:id` | Delete a post |
-| GET | `/api/comments/post/:postId` | Get comments for a post |
-| POST | `/api/comments` | Create a comment |
-| DELETE | `/api/comments/:id` | Delete a comment |
+/api/*
+    |
+    v
+jerney-backend:5000
 
 
----
+/*
+    |
+    v
+React Static Files
 
-## 🌿 Branch Strategy
+The backend service is accessed internally through:
 
-| Branch | Purpose |
-|--------|---------|
-| `main` | Source code + EC2 bare-metal deployment |
-| `devops` | Full DevSecOps — Docker, Kubernetes (EKS), Terraform, CI/CD pipeline, security scanning |
+jerney-backend:5000
+Kubernetes Deployment
 
----
+The Kubernetes resources are maintained in:
+
+k8s/manifest.yaml
+
+The manifest contains:
+
+Namespace
+Kubernetes Secret
+StorageClass
+PersistentVolumeClaim
+PostgreSQL Deployment
+PostgreSQL Service
+Backend Deployment
+Backend Service
+Frontend Deployment
+Frontend Service
+EKS Auto Mode Ingress
+Horizontal Pod Autoscaler
+PodDisruptionBudget
+NetworkPolicies
+Kubernetes Architecture
+                    AWS ALB
+                       |
+                       v
+              Frontend Service
+                    :80
+                       |
+                       v
+                Frontend Pods
+                 Nginx :8080
+                       |
+                       |
+              /api/ requests
+                       |
+                       v
+              Backend Service
+                    :5000
+                       |
+                       v
+                Backend Pods
+                 Node.js
+                       |
+                       v
+                PostgreSQL
+                    :5432
+                       |
+                       v
+                     PVC
+                       |
+                       v
+                    EBS
+Kubernetes Networking
+
+The frontend is exposed through an AWS Application Load Balancer.
+
+The backend is not exposed directly to the internet.
+
+The PostgreSQL database is also not exposed externally.
+
+Internet
+   |
+   v
+ALB
+   |
+   v
+Frontend
+   |
+   v
+Backend
+   |
+   v
+PostgreSQL
+Kubernetes Autoscaling
+
+Horizontal Pod Autoscaling is configured for the frontend and backend.
+
+Backend
+Minimum replicas: 2
+Maximum replicas: 5
+
+The backend HPA uses CPU and memory utilization.
+
+Frontend
+Minimum replicas: 2
+Maximum replicas: 4
+
+The frontend HPA also uses CPU and memory utilization.
+
+Rolling Updates
+
+Frontend and backend deployments use Kubernetes RollingUpdate strategy.
+
+The deployment configuration uses:
+
+maxUnavailable: 0
+maxSurge: 1
+
+This allows new pods to be started before old pods are removed and helps maintain application availability during deployments.
+
+Persistent Storage
+
+PostgreSQL uses a Kubernetes PersistentVolumeClaim.
+
+PostgreSQL
+     |
+     v
+PVC
+     |
+     v
+EBS gp3
+
+The EBS storage configuration uses:
+
+gp3
+Encryption
+ReadWriteOnce
+Dynamic provisioning
+Kubernetes Security
+
+The Kubernetes deployment includes several security controls.
+
+Container Security
+Non-root containers
+allowPrivilegeEscalation: false
+Linux capabilities dropped
+Resource requests and limits
+Read-only filesystem where applicable
+Service account token disabled where unnecessary
+Network Security
+
+NetworkPolicies restrict communication between application tiers.
+
+Frontend
+   |
+   v
+Backend
+   |
+   v
+PostgreSQL
+
+PostgreSQL only accepts traffic from backend pods.
+
+Backend traffic is restricted to frontend pods.
+
+CI/CD Pipeline
+
+Jenkins is used as the CI/CD engine.
+
+The pipeline is configured to use the:
+
+devops
+
+branch.
+
+The Jenkins pipeline performs the following stages:
+
+Git Checkout
+      |
+      v
+Gitleaks
+      |
+      v
+Frontend npm Install
+      |
+      v
+Frontend Tests
+      |
+      v
+Backend npm Install
+      |
+      v
+Backend Tests
+      |
+      v
+Trivy Filesystem Scan
+      |
+      v
+SonarQube Analysis
+      |
+      v
+SonarQube Quality Gate
+      |
+      v
+Docker Build
+      |
+      +----------------+
+      |                |
+      v                v
+   Frontend         Backend
+      |                |
+      +--------+-------+
+               |
+               v
+        Trivy Image Scan
+               |
+               v
+          Docker Hub
+               |
+               v
+           Kubeaudit
+               |
+               v
+     Kubernetes Validation
+               |
+               v
+             EKS
+               |
+               v
+       Rolling Deployment
+               |
+               v
+       Rollout Verification
+               |
+               v
+       HPA / Pod / Service
+           Verification
+               |
+               v
+        Email Notification
+Security Scanning
+Gitleaks
+
+Gitleaks is used to detect accidentally committed secrets such as:
+
+Passwords
+API keys
+Tokens
+Credentials
+
+Pipeline stage:
+
+Gitleaks Secret Scan
+Trivy Filesystem Scan
+
+Trivy scans the source repository for:
+
+Vulnerabilities
+Secrets
+Misconfigurations
+
+Pipeline stage:
+
+Trivy Filesystem Scan
+SonarQube
+
+SonarQube performs static code analysis.
+
+It helps identify:
+
+Bugs
+Code smells
+Security issues
+Maintainability problems
+
+The pipeline waits for the SonarQube Quality Gate before continuing.
+
+SonarQube Analysis
+        |
+        v
+   Quality Gate
+        |
+   +----+----+
+   |         |
+ PASS       FAIL
+   |         |
+   v         v
+Continue    Stop
+Trivy Image Scanning
+
+After Docker images are built, Trivy scans the images for high and critical vulnerabilities.
+
+Images scanned:
+
+sagarsmanjunath/jerney-frontend
+sagarsmanjunath/jerney-backend
+Kubeaudit
+
+Kubeaudit scans the Kubernetes manifest for Kubernetes security issues before deployment.
+
+The Kubernetes manifest being scanned is:
+
+k8s/manifest.yaml
+Docker Hub
+
+Docker images are pushed to Docker Hub.
+
+Frontend
+sagarsmanjunath/jerney-frontend
+Backend
+sagarsmanjunath/jerney-backend
+
+Jenkins creates both a build-specific tag and the latest tag.
+
+Example:
+
+sagarsmanjunath/jerney-frontend:25
+sagarsmanjunath/jerney-backend:25
+
+Build-specific tags make it possible to identify which Jenkins build produced a deployed image.
+
+Deployment to EKS
+
+After the required security checks pass, Jenkins deploys the application to Amazon EKS.
+
+The deployment process is:
+
+Docker Hub
+     |
+     v
+EKS
+     |
+     v
+kubectl apply
+     |
+     v
+Kubernetes Deployments
+     |
+     v
+Rolling Update
+     |
+     v
+Rollout Verification
+
+Jenkins verifies:
+
+Backend rollout
+Frontend rollout
+Pods
+Services
+Deployments
+HPA
+PVC
+Ingress
+Monitoring
+
+The project uses two levels of monitoring.
+
+System-Level Monitoring
+
+Node Exporter is used to collect system-level metrics such as:
+
+CPU usage
+Memory usage
+Disk usage
+System statistics
+
+Node Exporter exposes metrics that can be collected by Prometheus.
+
+System
+  |
+  v
+Node Exporter
+  |
+  v
+Prometheus
+  |
+  v
+Grafana
+Website-Level Monitoring
+
+Blackbox Exporter is used to monitor application availability from the outside.
+
+It can monitor:
+
+HTTP availability
+Endpoint response
+Application reachability
+Website
+   |
+   v
+Blackbox Exporter
+   |
+   v
+Prometheus
+   |
+   v
+Grafana
+Monitoring Architecture
+                    Prometheus
+                    /        \
+                   /          \
+                  v            v
+          Node Exporter    Blackbox Exporter
+               |                 |
+               v                 v
+        System Metrics      Website Metrics
+               \                 /
+                \               /
+                 v             v
+                    Grafana
+Environment Variables
+
+Environment-specific configuration is managed using environment variables.
+
+The actual .env file contains local configuration and secrets and should not be shared publicly.
+
+An .env.example file can be used to document the required variable names without exposing real credentials.
+
+Example:
+
+POSTGRES_USER=your-user
+POSTGRES_PASSWORD=your-password
+POSTGRES_DB=your-database
+
+Actual credentials should be provided through a secure mechanism.
+
+Important Security Practices
+
+This project follows several DevSecOps practices:
+
+Secrets scanning with Gitleaks
+Filesystem scanning with Trivy
+Docker image vulnerability scanning with Trivy
+Static code analysis using SonarQube
+Kubernetes security auditing with Kubeaudit
+Non-root containers
+Resource limits
+Kubernetes NetworkPolicies
+Encrypted EBS storage
+Kubernetes health probes
+Rolling updates
+Horizontal Pod Autoscaling
+Internal-only backend and database services
+Running the Application Locally
+
+Clone the repository:
+
+git clone -b devops https://github.com/sagar-smanjunath/Jerney.git
+
+Move into the project:
+
+cd Jerney
+
+Start the application:
+
+docker compose up --build
+
+Open:
+
+http://localhost
+
+Stop the application:
+
+docker compose down
+Deploying to Kubernetes Manually
+
+Make sure your kubectl context points to the EKS cluster.
+
+Apply the Kubernetes manifest:
+
+kubectl apply -f k8s/manifest.yaml
+
+Check pods:
+
+kubectl get pods -n jerney
+
+Check services:
+
+kubectl get svc -n jerney
+
+Check deployments:
+
+kubectl get deployments -n jerney
+
+Check HPA:
+
+kubectl get hpa -n jerney
+
+Check PVC:
+
+kubectl get pvc -n jerney
+
+Check ingress:
+
+kubectl get ingress -n jerney
+
+Check rollout:
+
+kubectl rollout status deployment/jerney-frontend -n jerney
+kubectl rollout status deployment/jerney-backend -n jerney
+Project Highlights
+
+This project demonstrates practical implementation of:
+
+3-tier application architecture
+Docker containerization
+Multi-stage Docker builds
+Docker Compose
+Jenkins CI/CD
+DevSecOps security scanning
+GitHub integration
+Docker Hub image management
+Kubernetes deployments
+Amazon EKS
+EKS Auto Mode
+AWS Application Load Balancer
+Kubernetes Services
+PersistentVolumeClaims
+EBS storage
+Rolling updates
+Horizontal Pod Autoscaling
+Kubernetes health probes
+Kubernetes NetworkPolicies
+System monitoring
+Website monitoring
+CI/CD Tools Summary
+Tool	Purpose
+GitHub	Source code management
+Jenkins	CI/CD automation
+Gitleaks	Secret detection
+npm	Dependency management and testing
+SonarQube	Code quality and security analysis
+Trivy	Filesystem and container image scanning
+Docker	Containerization
+Docker Hub	Container image registry
+Kubeaudit	Kubernetes security auditing
+Kubernetes	Container orchestration
+Amazon EKS	Managed Kubernetes
+Prometheus	Metrics collection
+Node Exporter	System metrics
+Blackbox Exporter	Website availability monitoring
+Grafana	Metrics visualization
+Project Status
+
+The project is implemented as a Jenkins-based DevSecOps pipeline.
+
+Current deployment architecture:
+
+GitHub
+  |
+  v
+Jenkins
+  |
+  v
+Security Scanning
+  |
+  v
+Docker Build
+  |
+  v
+Docker Hub
+  |
+  v
+Kubeaudit
+  |
+  v
+Amazon EKS
+  |
+  v
+Rolling Updates + HPA
+  |
+  v
+Monitoring
+Author
+
+Sagar S M
+
+Cloud & DevOps Enthusiast
+
+GitHub:
+https://github.com/sagar-smanjunath
+
 
