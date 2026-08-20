@@ -1,17 +1,28 @@
+# Node.js
 node_modules/
-dist/
-.env
-*.log
 
-# Terraform
-terraform/.terraform/
-terraform/*.tfstate
-terraform/*.tfstate.backup
-terraform/.terraform.lock.hcl
-terraform/crash.log
+# Build output
+dist/
+build/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Docker
 *.tar
+
+# IDE
+.vscode/
+.idea/
 
 # OS
 .DS_Store
