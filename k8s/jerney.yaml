@@ -120,6 +120,7 @@ metadata:
     app.kubernetes.io/name: jerney-db
     app.kubernetes.io/part-of: jerney
     app.kubernetes.io/component: database
+
 spec:
   replicas: 1
 
@@ -144,6 +145,7 @@ spec:
         eks.amazonaws.com/compute-type: auto
 
       containers:
+
         - name: postgres
 
           image: postgres:16-alpine
@@ -163,6 +165,7 @@ spec:
               subPath: pgdata
 
           resources:
+
             requests:
               cpu: 250m
               memory: 256Mi
@@ -177,6 +180,7 @@ spec:
             runAsNonRoot: false
 
           livenessProbe:
+
             exec:
               command:
                 - pg_isready
@@ -191,6 +195,7 @@ spec:
             failureThreshold: 3
 
           readinessProbe:
+
             exec:
               command:
                 - pg_isready
@@ -205,7 +210,9 @@ spec:
             failureThreshold: 3
 
       volumes:
+
         - name: db-storage
+
           persistentVolumeClaim:
             claimName: jerney-db-pvc
 
@@ -223,6 +230,7 @@ metadata:
     app.kubernetes.io/name: jerney-db
     app.kubernetes.io/part-of: jerney
     app.kubernetes.io/component: database
+
 spec:
   type: ClusterIP
 
@@ -278,9 +286,6 @@ spec:
       nodeSelector:
         eks.amazonaws.com/compute-type: auto
 
-      # --------------------------------------------------------
-      # Wait for PostgreSQL before starting backend
-      # --------------------------------------------------------
       initContainers:
 
         - name: wait-for-db
@@ -310,14 +315,11 @@ spec:
 
               echo "DB is ready!"
 
-      # --------------------------------------------------------
-      # Backend Container
-      # --------------------------------------------------------
       containers:
 
         - name: backend
 
-          image: YOUR_DOCKERHUB_USERNAME/jerney-backend:latest
+          image: sagarsmanjunath/jerney-backend:latest
           imagePullPolicy: Always
 
           ports:
@@ -492,7 +494,7 @@ spec:
 
         - name: frontend
 
-          image: YOUR_DOCKERHUB_USERNAME/jerney-frontend:latest
+          image: sagarsmanjunath/jerney-frontend:latest
           imagePullPolicy: Always
 
           ports:
@@ -546,8 +548,6 @@ spec:
 ---
 # --------------------------------------------------------------
 # 10. Frontend Service
-#
-# Kubernetes Service:
 #
 # Service port 80
 #       |
