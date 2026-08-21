@@ -79,6 +79,18 @@ pipeline {
             }
         }
 
+        stage('Checkov IaC Scan') {
+            steps {
+                sh '''
+                    checkov \
+                      -d terraform \
+                      --framework terraform \
+                      --output cli \
+                      --output-file-path console,checkov-report.txt
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
@@ -383,6 +395,7 @@ pipeline {
                     attachmentsPattern:
                         'gitleaks-report.sarif,' +
                         'trivy-fs-report.txt,' +
+                        'checkov-report.txt,' +
                         'trivy-frontend-image-report.txt,' +
                         'trivy-backend-image-report.txt,' +
                         'kubeaudit-report.txt'
